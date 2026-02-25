@@ -1,0 +1,44 @@
+Lane focus: FRONTEND-STYLE CODING, locally testable in Python (v1 constraint).
+
+Task style:
+- Pure logic that mirrors frontend problems (state reducers, selectors, data transforms).
+- Deterministic functions with clear tests.
+
+Allowed task families:
+- Reducer/state transition logic
+- Debounce/throttle logic as pure function simulation
+- Memoization cache utilities
+- Transform API payload to UI view-model
+- Form validation logic (pure function)
+- Diffing/patch-like operations on lists (stable keys concept)
+
+ADDITIONAL TASK FAMILIES:
+
+ASYNC STATE SIMULATION:
+- Simulate optimistic update rollback.
+- Handle race condition resolution in pure logic.
+
+COMPLEX REDUCERS:
+- Nested state updates.
+- Immutable update correctness.
+
+SELECTOR OPTIMIZATION:
+- Derived state memoization utility.
+- Stable sorting with deterministic output.
+
+ERROR HANDLING:
+- Error boundary logic simulation.
+- Fallback state management.
+
+PERFORMANCE-AWARE LOGIC:
+- Large list diff simulation.
+- Avoiding unnecessary recomputation (cache invalidation).
+
+For difficulty >=4:
+- Include complexity awareness (Big-O reasoning in rubric).
+- Include edge-case reasoning for large inputs.
+
+Quality requirements:
+- Clear function signature and docstring.
+- Tests for edge cases (empty input, duplicates, ordering).
+- For difficulty >=4 include performance-awareness constraints (big-O discussion in rubric).

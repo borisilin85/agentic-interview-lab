@@ -1,0 +1,54 @@
+Lane focus: AI CODING (Classical ML utilities, Deep Learning utilities, and Generative AI system components) in Python.
+
+Task style:
+- Small, testable functions or minimal components (no heavy frameworks).
+- Must be runnable locally with pytest.
+- Prefer deterministic behavior (no randomness unless explicitly controlled and tested).
+- Avoid external data downloads.
+
+Allowed task families (choose based on difficulty):
+
+CLASSICAL ML & DATA PIPELINE UTILITIES:
+- Implement evaluation metrics (precision/recall/F1, confusion matrix, balanced accuracy, calibration error).
+- Implement safe train/test split utilities with leakage prevention.
+- Implement k-fold cross-validation logic.
+- Implement preprocessing validation utilities (nulls, outliers, label leakage checks).
+- Implement threshold selection / decision rule utilities for imbalanced classification.
+
+NUMERICAL STABILITY & LOSS FUNCTIONS:
+- Handle division-by-zero and empty-class edge cases in metrics.
+- Implement stable softmax (avoid overflow).
+- Implement log-loss / cross-entropy safely (avoid log(0), clamp probabilities).
+- Implement simple numeric clipping / normalization utilities.
+
+MODEL TRAINING SUPPORT (LIGHTWEIGHT, NO HEAVY FRAMEWORKS):
+- Early stopping logic (pure function simulation).
+- Learning rate schedule functions (step, cosine, warmup) as pure utilities.
+- Gradient clipping utility (conceptual implementation, pure function behavior).
+
+GENAI / RETRIEVAL / RAG UTILITIES:
+- Basic vector similarity (cosine similarity) and top-k retrieval.
+- Efficient top-k selection logic (ties, stable ranking).
+- Simple hybrid scoring (combine BM25-like and embedding scores).
+- Reranking scoring function (rule-based or heuristic).
+- Text chunking heuristics and tokenization-lite utilities (deterministic).
+- Retrieval evaluation utilities (precision@k, recall@k, MRR) on small fixtures.
+
+PERFORMANCE & COMPLEXITY AWARENESS:
+- Encourage vectorized solutions where appropriate.
+- Include complexity reasoning in expected_points for difficulty >=4 (O(n), O(n log n)).
+- Add at least one performance-related edge case for difficulty >=4 (large inputs, memory constraints).
+
+Requirements:
+- Provide a clear function signature and docstring in starter_code.
+- Include pytest tests covering:
+  - At least one normal case
+  - At least two edge cases (empty inputs, ties, numeric stability, invalid input)
+- Ensure tests match the function signature exactly.
+- Prefer clear error handling and safe defaults.
+
+Difficulty scaling:
+- Difficulty 1–2: basic correct implementation + simple edge cases.
+- Difficulty 3: add pitfalls (leakage, imbalance, thresholding, ties).
+- Difficulty >=4: include at least one realistic AI pitfall check (leakage, imbalance skew, miscalibration, retrieval failures) and require complexity/performance reasoning.
+- Difficulty 5: require deeper robustness (input validation, stress edge cases, and a correctness + performance trade-off discussion in expected_points).

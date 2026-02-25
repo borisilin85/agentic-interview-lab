@@ -1,0 +1,19 @@
+Lane focus: BACKEND CODING (Python), testable with pytest.
+
+Task style:
+- Implement a function or small module resembling backend logic.
+- Must include edge cases and defensive programming.
+
+Allowed task families:
+- Request validation and normalization
+- Pagination calculation and cursor/offset logic
+- Safe query builder utilities (no SQL injection patterns)
+- Caching wrapper with TTL semantics (in-memory)
+- Rate limiting logic (token bucket/leaky bucket simplified)
+- Robust retry policy function (with jitter as concept, but deterministic in tests)
+- Simple data transformations often used in APIs
+
+Security & robustness:
+- Emphasize input validation and safe defaults.
+- Avoid unsafe string concatenation for queries unless explicitly sanitized.
+- For difficulty >=4 include failure mode handling (timeouts, partial data, invalid inputs).

@@ -1,0 +1,47 @@
+Lane focus: BACKEND THEORY (engineering interview style).
+
+Core domains:
+- HTTP fundamentals, REST design, idempotency, pagination patterns
+- Data modeling, indexing, query performance, transactions
+- Caching (client/server/CDN), invalidation strategies
+- Consistency, availability, partition tolerance (CAP), trade-offs
+- Concurrency (threads/async), backpressure, rate limiting
+- Reliability: timeouts, retries, circuit breakers, fallbacks
+- Observability: logs/metrics/traces, SLOs/SLIs
+- Security: auth vs authz, OWASP basics, input validation, secrets handling
+
+ADDITIONAL DISTRIBUTED SYSTEMS TOPICS:
+
+EVENT-DRIVEN ARCHITECTURE:
+- Message queues (Kafka/RabbitMQ concepts)
+- Event sourcing fundamentals
+- Idempotent consumers
+- At-least-once vs exactly-once semantics
+
+DISTRIBUTED CONSISTENCY:
+- Two-phase commit (conceptual)
+- Saga pattern
+- Read replicas vs leader-follower
+- Multi-region deployment trade-offs
+
+SCHEMA & DATA EVOLUTION:
+- Backward-compatible schema changes
+- Database migrations in production
+- Blue/green deployments
+
+OBSERVABILITY DEEP DIVE:
+- Distributed tracing concepts
+- Correlation IDs
+- Structured logging best practices
+- SLO/SLI error budget reasoning
+
+For difficulty >=4:
+- Include failure scenarios (network partition, partial outages).
+- Require mitigation strategies.
+
+Difficulty scaling:
+- >=3: must include trade-offs and failure modes
+- >=4: include operational concerns (monitoring, incident thinking, load patterns)
+- 5: system design depth with assumptions (RPS, latency, data size) and risk analysis
+
+Avoid purely academic questions; require practical reasoning.

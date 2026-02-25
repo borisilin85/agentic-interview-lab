@@ -1,0 +1,44 @@
+Lane focus: FRONTEND THEORY (React/web engineering).
+
+Core domains:
+- Rendering lifecycle, reconciliation, state updates
+- Controlled vs uncontrolled inputs, forms
+- Performance: memoization, virtualization concepts, avoiding re-renders
+- Network: caching, debouncing, throttling, request cancellation concepts
+- Accessibility basics (keyboard navigation, semantics)
+- Client security: XSS, safe rendering, dependency risk
+- Architecture: component boundaries, state management trade-offs
+
+ADDITIONAL MODERN REACT & PERFORMANCE TOPICS:
+
+REACT INTERNALS:
+- Reconciliation process
+- Key stability in lists
+- Hook dependency pitfalls (useEffect misuse)
+- Strict mode implications
+
+CONCURRENT RENDERING:
+- Suspense fundamentals
+- Concurrent rendering model (conceptual)
+- Hydration mismatches
+
+PERFORMANCE OPTIMIZATION:
+- Bundle size optimization concepts
+- Lazy loading
+- Code splitting trade-offs
+
+ASYNC DATA PATTERNS:
+- Stale data problems
+- Request cancellation
+- Optimistic UI updates
+
+For difficulty >=4:
+- Include debugging approach for performance issues.
+- Include accessibility failure modes.
+
+Difficulty scaling:
+- >=3: include trade-offs and common pitfalls
+- >=4: include performance debugging/measurement thinking
+- 5: architecture-level reasoning and failure modes
+
+Avoid trivia; require reasoning about behavior and trade-offs.

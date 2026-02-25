@@ -1,0 +1,141 @@
+Lane focus: AI THEORY (Classical ML, Deep Learning, and Generative AI Systems).
+
+The question must belong to one of the following major domains:
+
+────────────────────────────────
+CLASSICAL MACHINE LEARNING
+────────────────────────────────
+- Bias vs variance trade-off
+- Overfitting / underfitting
+- Regularization (L1, L2)
+- Cross-validation strategies
+- Data leakage and prevention
+- Feature engineering principles
+- Imbalanced datasets handling
+- Calibration and thresholding
+- Logistic regression assumptions
+- Tree-based methods (RF, GBM)
+- Boosting intuition
+- SVM fundamentals
+- Model selection & hyperparameter tuning
+
+────────────────────────────────
+STATISTICS & EVALUATION
+────────────────────────────────
+- Precision / Recall / F1
+- ROC-AUC vs PR-AUC trade-offs
+- Calibration curves
+- Bootstrapping & confidence intervals
+- Statistical significance
+- Offline vs online evaluation
+- A/B testing pitfalls
+- Experimental design
+- Causal inference intuition
+
+────────────────────────────────
+DEEP LEARNING
+────────────────────────────────
+- Backpropagation intuition
+- Vanishing/exploding gradients
+- Activation functions
+- Optimization algorithms (SGD/Adam)
+- Learning rate scheduling
+- BatchNorm / LayerNorm
+- CNN fundamentals
+- RNN / LSTM / GRU
+- Attention mechanism
+- Transformer architecture
+- Positional encoding
+- Self-attention mechanics
+
+────────────────────────────────
+GENERATIVE AI & LLM SYSTEMS
+────────────────────────────────
+- Embeddings and semantic similarity
+- Vector search fundamentals
+- RAG architecture
+- Chunking strategies
+- Hybrid retrieval (dense + sparse)
+- Re-ranking strategies
+- Hallucination causes & mitigation
+- Prompt engineering limitations
+- Tool use / function calling
+- Agent architectures
+- Context window limitations
+- "Lost in the middle" phenomenon
+- Fine-tuning vs prompting vs RAG
+- LoRA / adapters (conceptual)
+- Catastrophic forgetting
+
+────────────────────────────────
+EVALUATION OF AI SYSTEMS
+────────────────────────────────
+- LLM evaluation metrics (faithfulness, groundedness, relevance)
+- Retrieval evaluation (precision@k, recall@k, MRR)
+- Human evaluation pitfalls
+- Model drift detection
+- Dataset shift (covariate vs concept drift)
+- Monitoring in production
+- Latency vs quality trade-offs
+- Cost-performance trade-offs
+
+────────────────────────────────
+FAIRNESS, SAFETY & ETHICS
+────────────────────────────────
+- Dataset bias
+- Fairness metrics (demographic parity, equalized odds)
+- Bias mitigation strategies
+- Interpretability (SHAP/LIME intuition)
+- Explainability limitations in LLMs
+- Differential privacy intuition
+- Memorization risks in large models
+- PII risks in GenAI systems
+
+────────────────────────────────
+PRODUCTION & SYSTEM DESIGN
+────────────────────────────────
+- Batch vs streaming inference
+- Feature store concepts
+- Reproducibility challenges
+- Model versioning
+- Observability & logging
+- Feedback loops
+- Failure modes in AI systems
+- Incident debugging strategies
+
+────────────────────────────────
+Difficulty Scaling (Strictly Enforced)
+────────────────────────────────
+
+Difficulty 1:
+- Definitions and high-level intuition.
+
+Difficulty 2:
+- Explanation + simple applied example.
+
+Difficulty 3:
+- Trade-offs and practical pitfalls.
+- Applied reasoning required.
+
+Difficulty 4:
+- Production considerations.
+- Monitoring / evaluation discussion.
+- Failure modes required.
+
+Difficulty 5:
+- Deep theoretical reasoning.
+- Edge cases.
+- System-level implications.
+- Debugging and measurement thinking.
+
+────────────────────────────────
+Question Design Rules
+────────────────────────────────
+- Avoid vague prompts.
+- Avoid trivia unless difficulty = 1.
+- Require structured reasoning.
+- For difficulty >=3 include trade-offs.
+- For difficulty >=4 include evaluation or monitoring.
+- For difficulty = 5 require system-level thinking.
+
+The question must be technically precise and interview-realistic.
