@@ -1,0 +1,69 @@
+{
+  "additionalProperties": false,
+  "description": "Contract for evaluation output produced by the evaluator agent.\n\nField intent:\n- `score`: normalized 0..100 outcome for ranking/progress tracking.\n- `strengths` / `missing_points` / `incorrect_points`: structured feedback.\n- `ideal_answer`: compact reference answer for learning.\n- `improvement_tips`: concrete next actions for the candidate.\n- `clarifying_questions`: optional \"cannot grade fairly yet\" pathway.\n- `followup_question`: optional depth probe when score is below threshold.",
+  "properties": {
+    "score": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Score",
+      "type": "integer"
+    },
+    "strengths": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Strengths",
+      "type": "array"
+    },
+    "missing_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missing Points",
+      "type": "array"
+    },
+    "incorrect_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Incorrect Points",
+      "type": "array"
+    },
+    "ideal_answer": {
+      "minLength": 1,
+      "title": "Ideal Answer",
+      "type": "string"
+    },
+    "improvement_tips": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Improvement Tips",
+      "type": "array"
+    },
+    "clarifying_questions": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "title": "Clarifying Questions",
+      "type": "array"
+    },
+    "followup_question": {
+      "default": "",
+      "title": "Followup Question",
+      "type": "string"
+    }
+  },
+  "required": [
+    "score",
+    "strengths",
+    "missing_points",
+    "incorrect_points",
+    "ideal_answer",
+    "improvement_tips",
+    "clarifying_questions"
+  ],
+  "title": "EvaluationV1",
+  "type": "object"
+}

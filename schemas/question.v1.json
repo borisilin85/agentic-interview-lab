@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "CodingPayloadV1": {
+      "additionalProperties": false,
+      "description": "Contract for coding-specific content attached to a question.\n\nField rationale:\n- `language`: locked to python in v1 (matches current product scope).\n- `starter_code`: non-empty base candidates can edit.\n- `requirements`: explicit acceptance criteria for objective grading.\n- `tests`: executable checks that align with starter signature.",
+      "properties": {
+        "language": {
+          "pattern": "^python$",
+          "title": "Language",
+          "type": "string"
+        },
+        "starter_code": {
+          "minLength": 1,
+          "title": "Starter Code",
+          "type": "string"
+        },
+        "requirements": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Requirements",
+          "type": "array"
+        },
+        "tests": {
+          "minLength": 1,
+          "title": "Tests",
+          "type": "string"
+        }
+      },
+      "required": [
+        "language",
+        "starter_code",
+        "requirements",
+        "tests"
+      ],
+      "title": "CodingPayloadV1",
+      "type": "object"
+    },
+    "QuestionType": {
+      "description": "Question mode taxonomy.\n\nThis directly drives cross-field validation:\n- `theory` questions must not include coding payloads.\n- `coding` questions must include coding payloads.",
+      "enum": [
+        "theory",
+        "coding"
+      ],
+      "title": "QuestionType",
+      "type": "string"
+    },
+    "Track": {
+      "description": "Interview lane taxonomy.\n\nUsing enums instead of free-form strings guarantees that every payload\nbelongs to one known lane and prevents typo variants like \"back-end\".",
+      "enum": [
+        "ai",
+        "backend",
+        "frontend"
+      ],
+      "title": "Track",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Contract for a single generated interview question object.\n\nKey constraints and intent:\n- `difficulty` in [1..5]: fixed scale used across lanes.\n- `expected_points` length 6..10: enough rubric granularity for scoring\n  without becoming noisy or inconsistent.\n- `followups` exactly 3: fixed shape simplifies client UX and evaluation.\n- `red_flags` exactly 3: captures common misconceptions consistently.\n- `coding`: nullable and controlled by `question_type`.",
+  "properties": {
+    "track": {
+      "$ref": "#/$defs/Track"
+    },
+    "question_type": {
+      "$ref": "#/$defs/QuestionType"
+    },
+    "difficulty": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Difficulty",
+      "type": "integer"
+    },
+    "question": {
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "expected_points": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "minItems": 6,
+      "title": "Expected Points",
+      "type": "array"
+    },
+    "followups": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Followups",
+      "type": "array"
+    },
+    "red_flags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Red Flags",
+      "type": "array"
+    },
+    "coding": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CodingPayloadV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "track",
+    "question_type",
+    "difficulty",
+    "question",
+    "expected_points",
+    "followups",
+    "red_flags"
+  ],
+  "title": "QuestionV1",
+  "type": "object"
+}
