@@ -66,6 +66,11 @@ python scripts\run_generate_question.py --track ai --question-type theory --diff
 uvicorn interview_lab.api:app --host 0.0.0.0 --port 8000
 ```
 
+UI and docs:
+
+- App UI: `http://127.0.0.1:8000/`
+- Swagger: `http://127.0.0.1:8000/docs`
+
 Endpoints:
 
 - `GET /healthz`

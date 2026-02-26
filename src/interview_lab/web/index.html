@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentic Interview Lab</title>
+    <meta
+      name="description"
+      content="Generate interview questions and evaluate candidate answers with contract-first guardrails."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/main.css" />
+  </head>
+  <body>
+    <div class="bg-orb bg-orb-a" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-b" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">A</span>
+        <div>
+          <p class="brand-title">Agentic Interview Lab</p>
+          <p class="brand-subtitle">Contract-first LLM interview workflows</p>
+        </div>
+      </div>
+      <div class="live-pill" id="health-pill" aria-live="polite">Checking API...</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <h1>Control Room</h1>
+        <p class="panel-intro">
+          Generate lane-specific interview questions and evaluate candidate responses with strict
+          schema enforcement and repair fallback.
+        </p>
+
+        <div class="tab-row" role="tablist" aria-label="Operation type">
+          <button class="tab-btn active" data-tab="generate" role="tab" aria-selected="true">
+            Generate
+          </button>
+          <button class="tab-btn" data-tab="evaluate" role="tab" aria-selected="false">
+            Evaluate
+          </button>
+        </div>
+
+        <form id="generate-form" class="form-grid tab-panel active" novalidate>
+          <label for="track">Track</label>
+          <select id="track" name="track" required>
+            <option value="ai">AI</option>
+            <option value="backend">Backend</option>
+            <option value="frontend">Frontend</option>
+          </select>
+
+          <label for="question-type">Question Type</label>
+          <select id="question-type" name="question_type" required>
+            <option value="theory">Theory</option>
+            <option value="coding">Coding</option>
+          </select>
+
+          <label for="difficulty">Difficulty (1-5)</label>
+          <input id="difficulty" name="difficulty" type="number" min="1" max="5" value="3" required />
+
+          <label for="style">Style</label>
+          <select id="style" name="style">
+            <option value="">Default</option>
+            <option value="strict">Strict</option>
+            <option value="friendly">Friendly</option>
+          </select>
+
+          <button class="action-btn" type="submit">Generate Question</button>
+        </form>
+
+        <form id="evaluate-form" class="form-grid tab-panel" novalidate>
+          <label for="question-json">Question JSON</label>
+          <textarea
+            id="question-json"
+            name="question_json"
+            placeholder='{"track":"ai","question_type":"theory", ...}'
+            required
+          ></textarea>
+
+          <label for="candidate-answer">Candidate Answer</label>
+          <textarea
+            id="candidate-answer"
+            name="candidate_answer"
+            placeholder="Paste candidate answer text here..."
+            required
+          ></textarea>
+
+          <label for="validator-summary">Validator Summary (optional JSON)</label>
+          <textarea
+            id="validator-summary"
+            name="validator_summary"
+            placeholder='{"tests_passed": false, "errors": ["..."]}'
+          ></textarea>
+
+          <button class="action-btn" type="submit">Evaluate Answer</button>
+        </form>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="output-head">
+          <h2>Result Stream</h2>
+          <button id="copy-btn" class="ghost-btn" type="button">Copy JSON</button>
+        </div>
+        <p id="status-line" class="status-line" aria-live="polite">Idle</p>
+        <div id="result-view" class="result-view" aria-live="polite"></div>
+        <details class="raw-toggle">
+          <summary>Raw JSON</summary>
+          <pre id="output" class="output-box" aria-live="polite">{}</pre>
+        </details>
+      </section>
+    </main>
+
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>
