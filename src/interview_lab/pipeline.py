@@ -22,6 +22,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from random import Random
 from typing import Any, Literal, Protocol, TypeVar, overload
 from uuid import uuid4
 
@@ -161,6 +162,34 @@ def _json_dumps(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
+def _compact_json_preview(payload: dict[str, Any] | None, *, max_len: int = 500) -> str | None:
+    """Render parsed JSON object in one compact line for logs."""
+    if payload is None:
+        return None
+    return _truncate(_json_dumps(payload), max_len)
+
+
+def _pick_variation_hint(*, request_id: str, target: Target) -> str:
+    """Choose a stable per-request diversity hint to avoid repeated defaults."""
+    if target == "question":
+        hints = [
+            "Choose a less common subtopic than the most canonical interview example for this lane.",
+            "Frame the question around debugging or failure analysis instead of a plain definition prompt.",
+            "Prefer a concrete real-world scenario over a textbook compare-and-contrast formulation.",
+            "Focus on trade-offs under constraints such as latency, maintainability, or reliability.",
+            "Use an edge case, pitfall, or misconception as the center of the question.",
+            "Anchor the prompt in a realistic engineering decision rather than pure theory exposition.",
+            "Avoid the most overused interview topics unless the lane-specific prompt requires them.",
+            "Prefer a question that tests applied reasoning before memorized terminology.",
+        ]
+    else:
+        hints = [
+            "Keep the evaluation specific and evidence-based.",
+        ]
+
+    return f"{Random(request_id).choice(hints)} Diversity token: {request_id[:8]}."
+
+
 # ---------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------
@@ -215,6 +244,7 @@ class InterviewPipeline:
             "track": request.track.value,
             "question_type": request.question_type.value,
             "difficulty": request.difficulty,
+            "variation_hint": _pick_variation_hint(request_id=request_id, target="question"),
         }
         if request.style is not None:
             user_payload["style"] = request.style
@@ -342,13 +372,36 @@ class InterviewPipeline:
                 },
             )
 
-            failure = self._try_parse_and_validate(raw_output, target)
+            failure = self._try_parse_and_validate(
+                raw_output,
+                target,
+                question_context=user_payload if target == "question" else None,
+            )
             if failure is None:
-                return self._parse_and_validate(raw_output, target)
+                return self._parse_and_validate(
+                    raw_output,
+                    target,
+                    question_context=user_payload if target == "question" else None,
+                )
 
-            last_error = f"primary failed [{failure.kind}]: {failure.message}"
+            output_preview = _truncate(raw_output, self.max_output_preview_chars)
+            parsed_preview = _compact_json_preview(failure.parsed_obj)
+            last_error = (
+                f"primary failed [{failure.kind}]: {failure.message}. "
+                f"Raw output preview: {output_preview}"
+            )
             self.logger.warning(
-                "pipeline_invalid",
+                (
+                    "pipeline_invalid target=%s attempt=%s stage=%s error_kind=%s "
+                    "error=%s raw_output_preview=%s parsed_json_object=%s"
+                ),
+                target,
+                attempt,
+                "primary",
+                failure.kind,
+                failure.message,
+                output_preview,
+                parsed_preview,
                 extra={
                     "request_id": request_id,
                     "target": target,
@@ -356,6 +409,8 @@ class InterviewPipeline:
                     "stage": "primary",
                     "error_kind": failure.kind,
                     "error": failure.message,
+                    "raw_output_preview": output_preview,
+                    "parsed_json_object": parsed_preview,
                 },
             )
 
@@ -366,6 +421,7 @@ class InterviewPipeline:
                 target_schema_name=target_schema_name,
                 raw_output=raw_output,
                 failure=failure,
+                request_context=user_payload if target == "question" else None,
             )
 
             repair_output = self.llm_client.generate(
@@ -394,13 +450,36 @@ class InterviewPipeline:
                 },
             )
 
-            repair_failure = self._try_parse_and_validate(repair_output, target)
+            repair_failure = self._try_parse_and_validate(
+                repair_output,
+                target,
+                question_context=user_payload if target == "question" else None,
+            )
             if repair_failure is None:
-                return self._parse_and_validate(repair_output, target)
+                return self._parse_and_validate(
+                    repair_output,
+                    target,
+                    question_context=user_payload if target == "question" else None,
+                )
 
-            last_error = f"repair failed [{repair_failure.kind}]: {repair_failure.message}"
+            repair_output_preview = _truncate(repair_output, self.max_output_preview_chars)
+            repair_parsed_preview = _compact_json_preview(repair_failure.parsed_obj)
+            last_error = (
+                f"repair failed [{repair_failure.kind}]: {repair_failure.message}. "
+                f"Raw output preview: {repair_output_preview}"
+            )
             self.logger.warning(
-                "pipeline_invalid",
+                (
+                    "pipeline_invalid target=%s attempt=%s stage=%s error_kind=%s "
+                    "error=%s raw_output_preview=%s parsed_json_object=%s"
+                ),
+                target,
+                attempt,
+                "repair",
+                repair_failure.kind,
+                repair_failure.message,
+                repair_output_preview,
+                repair_parsed_preview,
                 extra={
                     "request_id": request_id,
                     "target": target,
@@ -408,6 +487,8 @@ class InterviewPipeline:
                     "stage": "repair",
                     "error_kind": repair_failure.kind,
                     "error": repair_failure.message,
+                    "raw_output_preview": repair_output_preview,
+                    "parsed_json_object": repair_parsed_preview,
                 },
             )
 
@@ -448,6 +529,7 @@ class InterviewPipeline:
         target_schema_name: SchemaName,
         raw_output: str,
         failure: ParseFailure,
+        request_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "target": target_schema_name,
@@ -455,6 +537,9 @@ class InterviewPipeline:
             "error_kind": failure.kind,
             "error": failure.message,
         }
+
+        if request_context is not None:
+            payload["request_context"] = request_context
 
         if failure.parsed_obj is not None:
             payload["parsed_json_object"] = failure.parsed_obj
@@ -475,10 +560,18 @@ class InterviewPipeline:
     # Parsing / validation
     # -------------------------
 
-    def _try_parse_and_validate(self, raw_output: str, target: Target) -> ParseFailure | None:
+    def _try_parse_and_validate(
+        self,
+        raw_output: str,
+        target: Target,
+        *,
+        question_context: dict[str, Any] | None = None,
+    ) -> ParseFailure | None:
         """Return ParseFailure if invalid, else None."""
         try:
-            _ = self._parse_and_validate(raw_output, target)
+            _ = self._parse_and_validate(
+                raw_output, target, question_context=question_context
+            )
             return None
         except json.JSONDecodeError as err:
             return ParseFailure(kind="json_decode", message=str(err))
@@ -499,7 +592,13 @@ class InterviewPipeline:
         except ValueError as err:
             return ParseFailure(kind="value", message=str(err))
 
-    def _parse_and_validate(self, raw_output: str, target: Target) -> QuestionV1 | EvaluationV1:
+    def _parse_and_validate(
+        self,
+        raw_output: str,
+        target: Target,
+        *,
+        question_context: dict[str, Any] | None = None,
+    ) -> QuestionV1 | EvaluationV1:
         """Parse model text into JSON, then validate with strict contracts."""
         json_text = self._extract_json_text(raw_output)
         data = json.loads(json_text)
@@ -508,6 +607,11 @@ class InterviewPipeline:
             raise ValueError("output JSON must be an object")
 
         if target == "question":
+            if question_context is not None:
+                # These fields are deterministic from the original request.
+                data["track"] = question_context["track"]
+                data["question_type"] = question_context["question_type"]
+                data["difficulty"] = question_context["difficulty"]
             return QuestionV1.model_validate(data)
         return EvaluationV1.model_validate(data)
 

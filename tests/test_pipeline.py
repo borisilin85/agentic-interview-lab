@@ -96,6 +96,52 @@ def test_generate_question_uses_repair_when_primary_invalid() -> None:
     assert stub.calls[1]["metadata"]["stage"] == "repair"
 
 
+def test_generate_question_applies_request_context_to_required_metadata() -> None:
+    # LLM output leaves request-derived metadata invalid, pipeline should self-heal.
+    raw = json.dumps(
+        {
+            "track": "",
+            "question_type": "theory",
+            "difficulty": "",
+            "question": "Explain CAP theorem trade-offs.",
+            "expected_points": ["p1", "p2", "p3", "p4", "p5", "p6"],
+            "followups": ["f1", "f2", "f3"],
+            "red_flags": ["r1", "r2", "r3"],
+            "coding": None,
+        }
+    )
+    stub = StubLLMClient([raw])
+    pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root(), max_attempts=1)
+
+    result = pipeline.generate_question(
+        QuestionRequest(track="backend", question_type="theory", difficulty=4)
+    )
+
+    assert result.track.value == "backend"
+    assert result.question_type.value == "theory"
+    assert result.difficulty == 4
+    assert len(stub.calls) == 1
+    assert stub.calls[0]["metadata"]["stage"] == "primary"
+
+
+def test_generate_question_includes_request_scoped_variation_hint() -> None:
+    stub = StubLLMClient([valid_question_json(), valid_question_json()])
+    pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root())
+
+    request = QuestionRequest(track="frontend", question_type="theory", difficulty=3)
+    pipeline.generate_question(request)
+    pipeline.generate_question(request)
+
+    first_payload = json.loads(stub.calls[0]["user_prompt"])
+    second_payload = json.loads(stub.calls[1]["user_prompt"])
+
+    assert first_payload["track"] == "frontend"
+    assert second_payload["track"] == "frontend"
+    assert "variation_hint" in first_payload
+    assert "variation_hint" in second_payload
+    assert first_payload["variation_hint"] != second_payload["variation_hint"]
+
+
 def test_evaluate_answer_success() -> None:
     stub = StubLLMClient([valid_evaluation_json()])
     pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root())
