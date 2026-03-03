@@ -54,17 +54,37 @@ Optional:
 - `GEMINI_API_BASE` (default: `https://generativelanguage.googleapis.com`)
 - `GEMINI_TIMEOUT_SECONDS` (default: `60`)
 
+Important:
+
+- `scripts\run_generate_question.py` loads `.env` automatically.
+- `uvicorn interview_lab.api:app ...` does not load `.env` automatically.
+- For local API runs, export the variables into your shell first, or use a runner that supports `.env` loading.
+
+Example (PowerShell):
+
+```powershell
+$env:GEMINI_API_KEY = "your-key"
+$env:GEMINI_MODEL = "gemini-2.5-flash"
+$env:GEMINI_API_VERSION = "v1beta"
+$env:GEMINI_API_BASE = "https://generativelanguage.googleapis.com"
+$env:GEMINI_TIMEOUT_SECONDS = "60"
+```
+
 ## Run locally (script)
 
 ```powershell
 python scripts\run_generate_question.py --track ai --question-type theory --difficulty 3 --style strict --pretty
 ```
 
+This script reads `.env` before creating the Gemini client.
+
 ## Run locally (API)
 
 ```powershell
 uvicorn interview_lab.api:app --host 0.0.0.0 --port 8000
 ```
+
+Before starting Uvicorn, make sure the required `GEMINI_*` variables are already present in the environment. Copying `.env` alone is not sufficient unless your shell or process manager loads it.
 
 UI and docs:
 
@@ -89,6 +109,29 @@ Run:
 
 ```powershell
 docker run --rm -p 8000:8000 --env-file .env agentic-interview-lab:latest
+```
+
+Docker's `--env-file` flag injects the variables for the container, so this path does use `.env` as shown.
+
+## Docker Compose
+
+For a repeatable local or single-host deployment:
+
+```powershell
+docker compose up --build
+```
+
+The Compose file:
+
+- builds the image from the local `Dockerfile`
+- injects variables from `.env`
+- exposes the API on `http://127.0.0.1:8000`
+- restarts the container unless it is explicitly stopped
+
+To stop it:
+
+```powershell
+docker compose down
 ```
 
 ## Testing
