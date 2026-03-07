@@ -313,7 +313,8 @@ class InterviewPipeline:
         if isinstance(request.question_json, QuestionV1):
             question_payload = request.question_json.model_dump(mode="json")
         else:
-            question_payload = request.question_json
+            # Enforce strict contract validation even when raw dict input is provided.
+            question_payload = QuestionV1.model_validate(request.question_json).model_dump(mode="json")
 
         user_payload: dict[str, Any] = {
             "question_json": question_payload,

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from interview_lab.pipeline import EvaluationRequest, InterviewPipeline, PipelineExecutionError, QuestionRequest
 
@@ -167,6 +168,27 @@ def test_evaluate_answer_success() -> None:
 
     assert result.score == 80
     assert len(stub.calls) == 1
+
+
+def test_evaluate_answer_rejects_invalid_question_json_dict() -> None:
+    stub = StubLLMClient([valid_evaluation_json()])
+    pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root())
+
+    invalid_question_json = {
+        "track": "ai",
+        # Missing required fields (question_type, difficulty, etc.)
+        "question": "Incomplete question payload",
+    }
+
+    with pytest.raises(ValidationError):
+        pipeline.evaluate_answer(
+            EvaluationRequest(
+                question_json=invalid_question_json,
+                candidate_answer="Sample candidate answer",
+            )
+        )
+
+    assert len(stub.calls) == 0
 
 
 def test_pipeline_raises_after_exhausting_attempts() -> None:
