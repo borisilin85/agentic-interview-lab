@@ -35,6 +35,18 @@ class StubLLMClient:
         return self._outputs.pop(0)
 
 
+class CaptureLogger:
+    def __init__(self) -> None:
+        self.info_calls: list[dict[str, Any]] = []
+        self.warning_calls: list[dict[str, Any]] = []
+
+    def info(self, message: str, *args: Any, **kwargs: Any) -> None:
+        self.info_calls.append({"message": message, "args": args, "kwargs": kwargs})
+
+    def warning(self, message: str, *args: Any, **kwargs: Any) -> None:
+        self.warning_calls.append({"message": message, "args": args, "kwargs": kwargs})
+
+
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
@@ -167,6 +179,56 @@ def test_pipeline_raises_after_exhausting_attempts() -> None:
 
     assert exc.value.attempts == 2
     assert len(stub.calls) == 4
+
+
+def test_pipeline_error_message_redacts_model_output_content() -> None:
+    secret = "SENSITIVE_TOKEN_123"
+    invalid_evaluation = json.dumps(
+        {
+            "score": secret,
+            "strengths": ["good structure"],
+            "missing_points": [],
+            "incorrect_points": [],
+            "ideal_answer": "answer",
+            "improvement_tips": [],
+            "clarifying_questions": [],
+            "followup_question": "",
+        }
+    )
+    stub = StubLLMClient([invalid_evaluation, invalid_evaluation])
+    pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root(), max_attempts=1)
+
+    with pytest.raises(PipelineExecutionError) as exc:
+        pipeline.evaluate_answer(
+            EvaluationRequest(
+                question_json=json.loads(valid_question_json()),
+                candidate_answer="sample answer",
+            )
+        )
+
+    assert secret not in str(exc.value)
+    assert "Raw output preview" not in str(exc.value)
+
+
+def test_pipeline_logs_hashed_output_fields_by_default() -> None:
+    stub = StubLLMClient(["not json", valid_question_json()])
+    logger = CaptureLogger()
+    pipeline = InterviewPipeline(
+        llm_client=stub,
+        repo_root=repo_root(),
+        max_attempts=1,
+        logger=logger,  # type: ignore[arg-type]
+    )
+
+    pipeline.generate_question(QuestionRequest(track="ai", question_type="theory", difficulty=3))
+
+    response_logs = [call for call in logger.info_calls if call["message"] == "pipeline_response"]
+    assert len(response_logs) == 2
+    for log_call in response_logs:
+        extra = log_call["kwargs"]["extra"]
+        assert "raw_output_sha12" in extra
+        assert "raw_output_length" in extra
+        assert "raw_output_preview" not in extra
 
 
 def test_extract_json_text_handles_markdown_and_noise() -> None:

@@ -86,7 +86,9 @@ class LLMClient(Protocol):
 class PipelineExecutionError(RuntimeError):
     """Raised when the pipeline cannot produce a valid contract object."""
 
-    def __init__(self, *, target: str, attempts: int, last_error: str) -> None:
+    def __init__(
+        self, *, target: str, attempts: int, last_error: str, request_id: str | None = None
+    ) -> None:
         message = (
             f"Pipeline failed for target={target} after {attempts} attempts. "
             f"Last error: {last_error}"
@@ -95,6 +97,7 @@ class PipelineExecutionError(RuntimeError):
         self.target = target
         self.attempts = attempts
         self.last_error = last_error
+        self.request_id = request_id
 
 
 # ---------------------------------------------------------------------
@@ -162,11 +165,28 @@ def _json_dumps(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
-def _compact_json_preview(payload: dict[str, Any] | None, *, max_len: int = 500) -> str | None:
-    """Render parsed JSON object in one compact line for logs."""
-    if payload is None:
+def _failure_public_code(failure: ParseFailure) -> str:
+    """Stable error code suitable for exception text/API responses."""
+    if failure.kind == "json_decode":
+        return "invalid_json_output"
+    if failure.kind == "validation":
+        return "schema_validation_failed"
+    return "invalid_output_value"
+
+
+def _safe_validation_diagnostics(
+    validation_errors: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]] | None:
+    """Reduce pydantic error payloads to non-sensitive diagnostics for logs."""
+    if not validation_errors:
         return None
-    return _truncate(_json_dumps(payload), max_len)
+
+    reduced: list[dict[str, Any]] = []
+    for item in validation_errors[:10]:
+        loc = item.get("loc")
+        safe_loc = list(loc) if isinstance(loc, tuple) else loc
+        reduced.append({"loc": safe_loc, "type": item.get("type")})
+    return reduced
 
 
 def _pick_variation_hint(*, request_id: str, target: Target) -> str:
@@ -208,6 +228,7 @@ class InterviewPipeline:
         max_output_preview_chars: int = 2000,
         include_json_schema_in_repair: bool = False,
         request_json_only: bool = True,
+        log_raw_output_preview: bool = False,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be >= 1")
@@ -220,8 +241,28 @@ class InterviewPipeline:
         self.max_output_preview_chars = max_output_preview_chars
         self.include_json_schema_in_repair = include_json_schema_in_repair
         self.request_json_only = request_json_only
+        self.log_raw_output_preview = log_raw_output_preview
 
         self._prompt_cache: dict[str, str] = {}
+
+    def _output_log_fields(self, raw_output: str) -> dict[str, Any]:
+        fields: dict[str, Any] = {
+            "raw_output_sha12": _sha12(raw_output),
+            "raw_output_length": len(raw_output),
+        }
+        if self.log_raw_output_preview:
+            fields["raw_output_preview"] = _truncate(raw_output, self.max_output_preview_chars)
+        return fields
+
+    @staticmethod
+    def _parsed_object_log_fields(parsed_obj: dict[str, Any] | None) -> dict[str, Any]:
+        if parsed_obj is None:
+            return {"parsed_json_present": False}
+        return {
+            "parsed_json_present": True,
+            "parsed_json_sha12": _sha12(_json_dumps(parsed_obj)),
+            "parsed_json_keys": sorted(parsed_obj.keys()),
+        }
 
     # -------------------------
     # Public API
@@ -368,7 +409,7 @@ class InterviewPipeline:
                     "target": target,
                     "attempt": attempt,
                     "stage": "primary",
-                    "raw_output_preview": _truncate(raw_output, self.max_output_preview_chars),
+                    **self._output_log_fields(raw_output),
                 },
             )
 
@@ -384,33 +425,21 @@ class InterviewPipeline:
                     question_context=user_payload if target == "question" else None,
                 )
 
-            output_preview = _truncate(raw_output, self.max_output_preview_chars)
-            parsed_preview = _compact_json_preview(failure.parsed_obj)
-            last_error = (
-                f"primary failed [{failure.kind}]: {failure.message}. "
-                f"Raw output preview: {output_preview}"
-            )
+            last_error = f"primary failed [{_failure_public_code(failure)}]"
+            safe_validation_errors = _safe_validation_diagnostics(failure.validation_errors)
             self.logger.warning(
-                (
-                    "pipeline_invalid target=%s attempt=%s stage=%s error_kind=%s "
-                    "error=%s raw_output_preview=%s parsed_json_object=%s"
-                ),
-                target,
-                attempt,
-                "primary",
-                failure.kind,
-                failure.message,
-                output_preview,
-                parsed_preview,
+                "pipeline_invalid",
                 extra={
                     "request_id": request_id,
                     "target": target,
                     "attempt": attempt,
                     "stage": "primary",
                     "error_kind": failure.kind,
-                    "error": failure.message,
-                    "raw_output_preview": output_preview,
-                    "parsed_json_object": parsed_preview,
+                    "error_code": _failure_public_code(failure),
+                    "validation_error_count": len(failure.validation_errors or []),
+                    "validation_errors": safe_validation_errors,
+                    **self._output_log_fields(raw_output),
+                    **self._parsed_object_log_fields(failure.parsed_obj),
                 },
             )
 
@@ -446,7 +475,7 @@ class InterviewPipeline:
                     "target": target,
                     "attempt": attempt,
                     "stage": "repair",
-                    "raw_output_preview": _truncate(repair_output, self.max_output_preview_chars),
+                    **self._output_log_fields(repair_output),
                 },
             )
 
@@ -462,33 +491,21 @@ class InterviewPipeline:
                     question_context=user_payload if target == "question" else None,
                 )
 
-            repair_output_preview = _truncate(repair_output, self.max_output_preview_chars)
-            repair_parsed_preview = _compact_json_preview(repair_failure.parsed_obj)
-            last_error = (
-                f"repair failed [{repair_failure.kind}]: {repair_failure.message}. "
-                f"Raw output preview: {repair_output_preview}"
-            )
+            last_error = f"repair failed [{_failure_public_code(repair_failure)}]"
+            repair_safe_validation_errors = _safe_validation_diagnostics(repair_failure.validation_errors)
             self.logger.warning(
-                (
-                    "pipeline_invalid target=%s attempt=%s stage=%s error_kind=%s "
-                    "error=%s raw_output_preview=%s parsed_json_object=%s"
-                ),
-                target,
-                attempt,
-                "repair",
-                repair_failure.kind,
-                repair_failure.message,
-                repair_output_preview,
-                repair_parsed_preview,
+                "pipeline_invalid",
                 extra={
                     "request_id": request_id,
                     "target": target,
                     "attempt": attempt,
                     "stage": "repair",
                     "error_kind": repair_failure.kind,
-                    "error": repair_failure.message,
-                    "raw_output_preview": repair_output_preview,
-                    "parsed_json_object": repair_parsed_preview,
+                    "error_code": _failure_public_code(repair_failure),
+                    "validation_error_count": len(repair_failure.validation_errors or []),
+                    "validation_errors": repair_safe_validation_errors,
+                    **self._output_log_fields(repair_output),
+                    **self._parsed_object_log_fields(repair_failure.parsed_obj),
                 },
             )
 
@@ -496,6 +513,7 @@ class InterviewPipeline:
             target=target,
             attempts=self.max_attempts,
             last_error=last_error,
+            request_id=request_id,
         )
 
     def _build_metadata(

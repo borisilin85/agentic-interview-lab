@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .llm_client import GeminiLLMClient, LLMClientError
@@ -17,6 +18,7 @@ from .pipeline import EvaluationRequest, InterviewPipeline, PipelineExecutionErr
 app = FastAPI(title="Agentic Interview Lab", version="0.1.0")
 WEB_DIR = Path(__file__).resolve().parent / "web"
 ASSETS_DIR = WEB_DIR / "assets"
+LOGGER = logging.getLogger("interview_lab.api")
 
 if ASSETS_DIR.exists():
     app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
@@ -42,12 +44,46 @@ def index() -> FileResponse:
     return FileResponse(index_file)
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    icon_file = ASSETS_DIR / "favicon.svg"
+    if icon_file.exists():
+        return FileResponse(icon_file, media_type="image/svg+xml")
+    return Response(status_code=204)
+
+
 @app.post("/generate-question", response_model=QuestionV1)
 def generate_question(request: QuestionRequest) -> QuestionV1:
     try:
         return get_pipeline().generate_question(request)
-    except (PipelineExecutionError, LLMClientError) as err:
-        raise HTTPException(status_code=502, detail=str(err)) from err
+    except PipelineExecutionError as err:
+        LOGGER.warning(
+            "generate_question_failed",
+            extra={
+                "request_id": err.request_id,
+                "target": err.target,
+                "attempts": err.attempts,
+                "error_code": err.last_error,
+            },
+        )
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "code": "UPSTREAM_FAILURE",
+                "message": "Failed to produce valid output",
+                "request_id": err.request_id,
+            },
+        ) from err
+    except LLMClientError as err:
+        LOGGER.warning("generate_question_provider_error")
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "code": "UPSTREAM_FAILURE",
+                "message": "Failed to produce valid output",
+                "request_id": None,
+            },
+        ) from err
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
@@ -56,7 +92,33 @@ def generate_question(request: QuestionRequest) -> QuestionV1:
 def evaluate_answer(request: EvaluationRequest) -> EvaluationV1:
     try:
         return get_pipeline().evaluate_answer(request)
-    except (PipelineExecutionError, LLMClientError) as err:
-        raise HTTPException(status_code=502, detail=str(err)) from err
+    except PipelineExecutionError as err:
+        LOGGER.warning(
+            "evaluate_answer_failed",
+            extra={
+                "request_id": err.request_id,
+                "target": err.target,
+                "attempts": err.attempts,
+                "error_code": err.last_error,
+            },
+        )
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "code": "UPSTREAM_FAILURE",
+                "message": "Failed to produce valid output",
+                "request_id": err.request_id,
+            },
+        ) from err
+    except LLMClientError as err:
+        LOGGER.warning("evaluate_answer_provider_error")
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "code": "UPSTREAM_FAILURE",
+                "message": "Failed to produce valid output",
+                "request_id": None,
+            },
+        ) from err
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
