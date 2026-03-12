@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
@@ -54,13 +55,15 @@ def favicon() -> Response:
 
 @app.post("/generate-question", response_model=QuestionV1)
 def generate_question(request: QuestionRequest) -> QuestionV1:
+    request_id = str(uuid4())
     try:
         return get_pipeline().generate_question(request)
     except PipelineExecutionError as err:
+        effective_request_id = err.request_id or request_id
         LOGGER.warning(
             "generate_question_failed",
             extra={
-                "request_id": err.request_id,
+                "request_id": effective_request_id,
                 "target": err.target,
                 "attempts": err.attempts,
                 "error_code": err.last_error,
@@ -71,17 +74,20 @@ def generate_question(request: QuestionRequest) -> QuestionV1:
             detail={
                 "code": "UPSTREAM_FAILURE",
                 "message": "Failed to produce valid output",
-                "request_id": err.request_id,
+                "request_id": effective_request_id,
             },
         ) from err
     except LLMClientError as err:
-        LOGGER.warning("generate_question_provider_error")
+        LOGGER.warning(
+            "generate_question_provider_error",
+            extra={"request_id": request_id, "provider_error": str(err)},
+        )
         raise HTTPException(
             status_code=502,
             detail={
                 "code": "UPSTREAM_FAILURE",
                 "message": "Failed to produce valid output",
-                "request_id": None,
+                "request_id": request_id,
             },
         ) from err
     except ValueError as err:
@@ -90,13 +96,15 @@ def generate_question(request: QuestionRequest) -> QuestionV1:
 
 @app.post("/evaluate-answer", response_model=EvaluationV1)
 def evaluate_answer(request: EvaluationRequest) -> EvaluationV1:
+    request_id = str(uuid4())
     try:
         return get_pipeline().evaluate_answer(request)
     except PipelineExecutionError as err:
+        effective_request_id = err.request_id or request_id
         LOGGER.warning(
             "evaluate_answer_failed",
             extra={
-                "request_id": err.request_id,
+                "request_id": effective_request_id,
                 "target": err.target,
                 "attempts": err.attempts,
                 "error_code": err.last_error,
@@ -107,17 +115,20 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationV1:
             detail={
                 "code": "UPSTREAM_FAILURE",
                 "message": "Failed to produce valid output",
-                "request_id": err.request_id,
+                "request_id": effective_request_id,
             },
         ) from err
     except LLMClientError as err:
-        LOGGER.warning("evaluate_answer_provider_error")
+        LOGGER.warning(
+            "evaluate_answer_provider_error",
+            extra={"request_id": request_id, "provider_error": str(err)},
+        )
         raise HTTPException(
             status_code=502,
             detail={
                 "code": "UPSTREAM_FAILURE",
                 "message": "Failed to produce valid output",
-                "request_id": None,
+                "request_id": request_id,
             },
         ) from err
     except ValueError as err:
