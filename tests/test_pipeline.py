@@ -155,6 +155,23 @@ def test_generate_question_includes_request_scoped_variation_hint() -> None:
     assert first_payload["variation_hint"] != second_payload["variation_hint"]
 
 
+def test_generate_question_includes_optional_topic() -> None:
+    stub = StubLLMClient([valid_question_json()])
+    pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root())
+
+    pipeline.generate_question(
+        QuestionRequest(
+            track="backend",
+            question_type="theory",
+            difficulty=3,
+            topic="rate limiting",
+        )
+    )
+
+    payload = json.loads(stub.calls[0]["user_prompt"])
+    assert payload["topic"] == "rate limiting"
+
+
 def test_evaluate_answer_success() -> None:
     stub = StubLLMClient([valid_evaluation_json()])
     pipeline = InterviewPipeline(llm_client=stub, repo_root=repo_root())

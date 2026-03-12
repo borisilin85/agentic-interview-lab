@@ -245,6 +245,10 @@ function wireGenerate() {
       question_type: form.get("question_type"),
       difficulty: Number(form.get("difficulty")),
     };
+    const topic = String(form.get("topic") || "").trim();
+    if (topic) {
+      payload.topic = topic;
+    }
     const style = String(form.get("style") || "").trim();
     if (style) {
       payload.style = style;

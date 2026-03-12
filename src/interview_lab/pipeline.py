@@ -49,6 +49,7 @@ class QuestionRequest(RequestModel):
     question_type: QuestionType
     difficulty: int = Field(ge=1, le=5)
     style: Literal["strict", "friendly"] | None = None
+    topic: str | None = Field(default=None, min_length=1, max_length=120)
 
 
 class EvaluationRequest(RequestModel):
@@ -313,6 +314,8 @@ class InterviewPipeline:
         }
         if request.style is not None:
             user_payload["style"] = request.style
+        if request.topic is not None:
+            user_payload["topic"] = request.topic
 
         return self._run_with_repair(
             target="question",

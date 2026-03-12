@@ -5,6 +5,7 @@ Inputs (provided in the user message as JSON):
 - question_type: "theory" | "coding"
 - difficulty: integer 1..5
 - optional: style: "strict" | "friendly"
+- optional: topic: a specific topic to center the question on (for example "rate limiting", "attention mechanism", "state management")
 - optional: variation_hint: a request-scoped hint used only to diversify topic/framing choices
 
 Output Requirements:
@@ -21,6 +22,7 @@ General Quality Standards:
 - Avoid vague discussion prompts.
 - The question must require structured reasoning.
 - When repeated requests use the same track, question_type, and difficulty, prefer a materially different subtopic or framing instead of repeating the most common default question.
+- If topic is provided, center the question on that topic while keeping lane/type/difficulty constraints.
 - If variation_hint is present, use it only as a diversity steer; it must not change the schema or appear in the output.
 
 Difficulty Enforcement (strictly apply depth):

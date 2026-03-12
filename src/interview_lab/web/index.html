@@ -8,6 +8,7 @@
       name="description"
       content="Generate interview questions and evaluate candidate answers with contract-first guardrails."
     />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -64,6 +65,14 @@
 
           <label for="difficulty">Difficulty (1-5)</label>
           <input id="difficulty" name="difficulty" type="number" min="1" max="5" value="3" required />
+
+          <label for="topic">Topic (optional)</label>
+          <input
+            id="topic"
+            name="topic"
+            type="text"
+            placeholder="e.g. rate limiting, transformer attention, React state reducers"
+          />
 
           <label for="style">Style</label>
           <select id="style" name="style">
