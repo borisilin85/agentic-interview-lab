@@ -5,6 +5,12 @@ Task style:
 - Must be runnable locally with pytest.
 - Prefer deterministic behavior (no randomness unless explicitly controlled and tested).
 - Avoid external data downloads.
+- Rotate across coding task modes, not only greenfield implementation:
+  - Implementation mode: write from a clean signature.
+  - Debug/Fix mode: analyze flawed starter code, find issue, and patch it.
+  - Fill-the-gap mode: complete missing logic in partial starter code.
+- In Debug/Fix mode, include a realistic bug (logic error, edge case miss, numeric issue, or ranking bug).
+- In Fill-the-gap mode, use TODO/pass gaps for core logic, not trivial placeholders.
 
 Allowed task families (choose based on difficulty):
 

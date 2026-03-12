@@ -3,6 +3,12 @@ Lane focus: FRONTEND-STYLE CODING, locally testable in Python (v1 constraint).
 Task style:
 - Pure logic that mirrors frontend problems (state reducers, selectors, data transforms).
 - Deterministic functions with clear tests.
+- Rotate across coding task modes:
+  - Implementation mode: build reducer/selector/transform logic from scratch.
+  - Debug/Fix mode: analyze flawed state/update logic and implement the fix.
+  - Fill-the-gap mode: complete missing reducer/selector logic in partial code.
+- Do not keep generating only implementation mode tasks.
+- For Debug/Fix mode, include realistic frontend-style bugs (immutability break, stale derived state, incorrect ordering, race-condition handling error).
 
 Allowed task families:
 - Reducer/state transition logic

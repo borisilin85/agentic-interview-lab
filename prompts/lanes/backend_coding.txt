@@ -3,6 +3,12 @@ Lane focus: BACKEND CODING (Python), testable with pytest.
 Task style:
 - Implement a function or small module resembling backend logic.
 - Must include edge cases and defensive programming.
+- Rotate across coding task modes:
+  - Implementation mode: write new backend logic from a clean signature.
+  - Debug/Fix mode: inspect flawed code and explain/implement the fix.
+  - Fill-the-gap mode: complete missing backend logic in partial starter code.
+- Do not default to implementation mode for every request.
+- For Debug/Fix mode, include realistic failure behavior (invalid input handling, pagination bug, cache TTL bug, retry policy bug, etc.).
 
 Allowed task families:
 - Request validation and normalization
