@@ -189,19 +189,38 @@ def _safe_validation_diagnostics(
     return reduced
 
 
-def _pick_variation_hint(*, request_id: str, target: Target) -> str:
+def _pick_variation_hint(
+    *,
+    request_id: str,
+    target: Target,
+    track: Track | None = None,
+    question_type: QuestionType | None = None,
+) -> str:
     """Choose a stable per-request diversity hint to avoid repeated defaults."""
     if target == "question":
-        hints = [
-            "Choose a less common subtopic than the most canonical interview example for this lane.",
-            "Frame the question around debugging or failure analysis instead of a plain definition prompt.",
-            "Prefer a concrete real-world scenario over a textbook compare-and-contrast formulation.",
-            "Focus on trade-offs under constraints such as latency, maintainability, or reliability.",
-            "Use an edge case, pitfall, or misconception as the center of the question.",
-            "Anchor the prompt in a realistic engineering decision rather than pure theory exposition.",
-            "Avoid the most overused interview topics unless the lane-specific prompt requires them.",
-            "Prefer a question that tests applied reasoning before memorized terminology.",
-        ]
+        if track == Track.AI and question_type == QuestionType.CODING:
+            # Retrieval is one family among several; keep it from becoming the default.
+            hints = [
+                "Use a classical ML/data utility topic such as thresholding, calibration, leakage checks, or cross-validation.",
+                "Use a numerical-stability-oriented task such as stable softmax, safe log-loss, or robust metric computation.",
+                "Use a training-support utility topic such as learning-rate scheduling, early stopping, or gradient clipping logic.",
+                "Use an evaluation/monitoring utility topic such as drift detection heuristics, alert thresholds, or metric trend checks.",
+                "Use a robustness-focused data validation topic with strong edge-case handling and safe defaults.",
+                "Use a performance-aware utility topic that requires complexity reasoning and large-input behavior handling.",
+                "Use a fairness/safety/privacy utility angle when relevant (for example bias checks or sensitive-field safeguards).",
+                "Use retrieval/RAG utilities only when they are a strong fit; avoid generic top-k retrieval as the default.",
+            ]
+        else:
+            hints = [
+                "Choose a less common subtopic than the most canonical interview example for this lane.",
+                "Frame the question around debugging or failure analysis instead of a plain definition prompt.",
+                "Prefer a concrete real-world scenario over a textbook compare-and-contrast formulation.",
+                "Focus on trade-offs under constraints such as latency, maintainability, or reliability.",
+                "Use an edge case, pitfall, or misconception as the center of the question.",
+                "Anchor the prompt in a realistic engineering decision rather than pure theory exposition.",
+                "Avoid the most overused interview topics unless the lane-specific prompt requires them.",
+                "Prefer a question that tests applied reasoning before memorized terminology.",
+            ]
     else:
         hints = [
             "Keep the evaluation specific and evidence-based.",
@@ -285,7 +304,12 @@ class InterviewPipeline:
             "track": request.track.value,
             "question_type": request.question_type.value,
             "difficulty": request.difficulty,
-            "variation_hint": _pick_variation_hint(request_id=request_id, target="question"),
+            "variation_hint": _pick_variation_hint(
+                request_id=request_id,
+                target="question",
+                track=request.track,
+                question_type=request.question_type,
+            ),
         }
         if request.style is not None:
             user_payload["style"] = request.style
@@ -348,7 +372,7 @@ class InterviewPipeline:
         lane_hint: str | None,
     ) -> QuestionV1: ...
 
-    @overload
+
     def _run_with_repair(
         self,
         *,

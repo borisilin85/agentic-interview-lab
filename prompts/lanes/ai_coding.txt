@@ -11,6 +11,9 @@ Task style:
   - Fill-the-gap mode: complete missing logic in partial starter code.
 - In Debug/Fix mode, include a realistic bug (logic error, edge case miss, numeric issue, or ranking bug).
 - In Fill-the-gap mode, use TODO/pass gaps for core logic, not trivial placeholders.
+- Do not over-focus on retrieval/RAG tasks.
+- Prefer non-retrieval families by default unless the request context strongly indicates retrieval.
+- Across repeated generations, rotate major families (classical ML, numerical stability, training utilities, monitoring/evaluation, and retrieval) instead of repeating one family.
 
 Allowed task families (choose based on difficulty):
 
