@@ -114,6 +114,7 @@ body {
   border-radius: 20px;
   padding: 20px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  min-width: 0;
 }
 
 .input-panel h1,
@@ -228,6 +229,8 @@ textarea:focus,
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .ghost-btn {
@@ -263,6 +266,9 @@ textarea:focus,
   font-family: var(--mono);
   font-size: 0.82rem;
   line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .result-view {
@@ -273,6 +279,9 @@ textarea:focus,
   min-height: 260px;
   max-height: 54vh;
   overflow: auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .raw-toggle {
@@ -289,6 +298,8 @@ textarea:focus,
 .result-title {
   margin: 0 0 8px;
   font-size: 1.05rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .meta-row {
@@ -345,6 +356,8 @@ textarea:focus,
 .result-block p {
   margin: 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .result-list {
@@ -355,6 +368,8 @@ textarea:focus,
 .result-list li {
   margin-bottom: 6px;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .code-block {
